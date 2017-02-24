@@ -1,0 +1,8 @@
+This directory contains several implementations
+
+ylmr2_new.f90: Code for CPU (openmp)  and GPU (CUF kernel).
+	cost,sent,phi are scalar
+	Q(ng, 0:lmax,0:lmax) is still a 3D array
+
+
+
