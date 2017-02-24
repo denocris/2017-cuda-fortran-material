@@ -1,0 +1,10 @@
+This is a standalone code that compute the spherical harmonic (SH)  functions
+of  a vector g. The subroutine computing the  SH is from Quantum Espresso (with
+external dependences on modules removed).
+
+Compile the code for CPU and study the OpenMP scalability.
+
+Optimize the CPU implementation ( hint: cost,sint,phi can be scalar quantities
+if the loops are rearranged).
+
+Write the code for GPU using CUDA Fortran.
