@@ -35,7 +35,7 @@ subroutine ylmr2_cpu (lmax2, ng, g, gg, ylm)
   ! local variables
   !
   real(DP), parameter :: eps = 1.0d-9
-  real(DP), allocatable ::  Q(:,:,:)
+  real(DP), allocatable ::  Q(:,:)
   real(DP) :: cost , sent, phi 
   real(DP) :: c, gmod
   integer :: lmax, ig, l, m, lm
@@ -59,14 +59,12 @@ subroutine ylmr2_cpu (lmax2, ng, g, gg, ylm)
   !
   !  theta and phi are polar angles, cost = cos(theta)
   !
-  allocate( Q(ng,0:lmax,0:lmax) )
+  allocate( Q(0:lmax,0:lmax) )
   !
   
-#ifdef USE_CUDA
+!$omp parallel do  default(shared), private(ig,gmod,lm,cost,sent,phi,l,c,m,Q)
+
 !$cuf kernel do <<<*,*>>>
-#else
-!$omp parallel do  default(shared), private(ig,gmod,lm,cost,sent,phi,l,c,m)
-#endif
    do ig=1,ng
      gmod = sqrt (gg (ig) )
      if (gmod < eps) then
@@ -90,14 +88,14 @@ subroutine ylmr2_cpu (lmax2, ng, g, gg, ylm)
   !  P(:,l,m) are the Legendre Polynomials (0 <= m <= l)
   !
    
-  Q (ig,0,0) = 1.d0
-  Q (ig,1,0) = cost
-  Q (ig,1,1) =-sent/sqrt(2.d0)
+  Q (0,0) = 1.d0
+  Q (1,0) = cost
+  Q (1,1) =-sent/sqrt(2.d0)
   c = sqrt (3.d0 / fpi)
-  ylm(ig, 1) = sqrt (1.d0 / fpi)* Q(ig,0,0)
-  ylm(ig, 2) = c* Q(ig,1,0)
-  ylm(ig, 3) = c*sqrt (2.d0)* Q(ig,1,1) * cos (phi)
-  ylm(ig, 4) = c*sqrt (2.d0)* Q(ig,1,1) * sin (phi)
+  ylm(ig, 1) = sqrt (1.d0 / fpi)* Q(0,0)
+  ylm(ig, 2) = c* Q(1,0)
+  ylm(ig, 3) = c*sqrt (2.d0)* Q(1,1) * cos (phi)
+  ylm(ig, 4) = c*sqrt (2.d0)* Q(1,1) * sin (phi)
   lm = 4
   do l = 2, lmax
      c = sqrt (DBLE(2*l+1) / fpi)
@@ -111,40 +109,39 @@ subroutine ylmr2_cpu (lmax2, ng, g, gg, ylm)
         !  recursion on l for Q(:,l,m)
         !
         do m = 0, l - 2
-           Q(ig,l,m) = cost*(2*l-1)/sqrt(DBLE(l*l-m*m))*Q(ig,l-1,m) &
-                       - sqrt(DBLE((l-1)*(l-1)-m*m))/sqrt(DBLE(l*l-m*m))*Q(ig,l-2,m)
+           Q(l,m) = cost*(2*l-1)/sqrt(DBLE(l*l-m*m))*Q(l-1,m) &
+                       - sqrt(DBLE((l-1)*(l-1)-m*m))/sqrt(DBLE(l*l-m*m))*Q(l-2,m)
         end do
-           Q(ig,l,l-1) = cost * sqrt(DBLE(2*l-1)) * Q(ig,l-1,l-1)
-           Q(ig,l,l)   = - sqrt(DBLE(2*l-1))/sqrt(DBLE(2*l))*sent*Q(ig,l-1,l-1) 
+           Q(l,l-1) = cost * sqrt(DBLE(2*l-1)) * Q(l-1,l-1)
+           Q(l,l)   = - sqrt(DBLE(2*l-1))/sqrt(DBLE(2*l))*sent*Q(l-1,l-1) 
      !end if
      !
      ! Y_lm, m = 0
      !
      lm = lm + 1
-        ylm(ig, lm) = c * Q(ig,l,0)
+     ylm(ig, lm) = c * Q(l,0)
      !
      do m = 1, l
         !
         ! Y_lm, m > 0
         !
-        !lm = lm + 1
-        ! ylm(ig, lm) = c * sqrt(2.d0) * Q(ig,l,m) * cos (m*phi)
-         ylm(ig, lm+2*m-1) = c * sqrt(2.d0) * Q(ig,l,m) * cos (m*phi)
+     !   lm = lm + 1
+     !    ylm(ig, lm) = c * sqrt(2.d0) * Q(l,m) * cos (m*phi)
+          ylm(ig, lm+2*m-1) = c * sqrt(2.d0) * Q(l,m) * cos (m*phi)
         !
         ! Y_lm, m < 0
         !
-        !lm = lm + 1
-        !ylm(ig, lm) = c * sqrt(2.d0) * Q(ig,l,m) * sin (m*phi)
-        ylm(ig, lm+2*m) = c * sqrt(2.d0) * Q(ig,l,m) * sin (m*phi)
+       ! lm = lm + 1
+       ! ylm(ig, lm) = c * sqrt(2.d0) * Q(l,m) * sin (m*phi)
+        ylm(ig, lm+2*m) = c * sqrt(2.d0) * Q(l,m) * sin (m*phi)
+     !if (ig==1) print *,"inside loop", lm+2*m-1,lm+2*m
+         
      end do
      lm=lm+2*l
      !if (ig==1) print *,lm,l
   end do
   enddo
-
-#ifndef USE_CUDA
 !$omp end parallel do
-#endif
   !
   deallocate( Q)
   !
