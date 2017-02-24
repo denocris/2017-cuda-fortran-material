@@ -1,0 +1,16 @@
+This directory contains different solutions:
+
+example2_vector_add:
+	main2.f90:  allocate with source, call either vector_add_cpu
+		    or vector_add_gpu
+	vector_add2.f90: has vector_add_cpu and vector_add_gpu with cuf kernel
+
+example3_vector_add:
+	main2.f90:  allocate with source, generic interface for vector_add
+	vector_add3.f90: module with generic interface, 
+                         vector_add_cpu and vector_add_gpu with cuf kernel
+
+example4_vector_add:
+	main4.f90:  allocate with source, 
+	vector_add4.f90: use preprocessor and trick in makefile to generate 
+		         vector_add_gpu and vector_add_gpu from single source

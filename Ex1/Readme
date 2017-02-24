@@ -1,0 +1,7 @@
+Simple code to add  a scalar value to each element of a vector and
+check that the result is correct.
+
+Add the same computation on GPU, using a cuf kernel.
+
+
+

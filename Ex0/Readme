@@ -1,0 +1,15 @@
+Simple code that in a do loop:
+1) Allocate 3 matrices A,B,C
+2) Initialize them
+3) Call GEMM (matrix multiply)
+4) Measure the time and flops for each invocation
+
+
+Modify the code to do the same operations on GPU:
+1) Allocate 3 matrices A,B,C on GPU
+2) Initialize them
+3) Call CUBLAS GEMM (matrix multiply)
+4) Measure the time and flops for each invocation
+
+CUDA Fortran provides a generic interface to GEMM, if the arguments are device matrices,
+loading the module cublas and invoking GEMM will call the subroutine on GPU. 
